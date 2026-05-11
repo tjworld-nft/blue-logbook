@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0b5f73">
+    <title>Blue Logbook</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="styles.css?v=5">
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__shade"></div>
+      <div class="hero__content">
+        <p class="eyebrow">Personal diving log</p>
+        <h1>Blue Logbook</h1>
+        <p class="lead">講習からファンダイビングまで、自分のスマホで育てていく写真と地図つきログブック。</p>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="profile-panel" aria-label="ログブック設定">
+        <label>
+          表示名
+          <input id="ownerName" type="text" autocomplete="name" placeholder="例：Yuka">
+        </label>
+        <label>
+          ログブック名
+          <input id="bookName" type="text" placeholder="例：My Ocean Notes">
+        </label>
+      </section>
+
+      <nav class="tabs" aria-label="画面切り替え">
+        <button class="tab is-active" data-view="logsView">ログ</button>
+        <button class="tab" data-view="entryView">入力</button>
+        <button class="tab" data-view="mapView">地図</button>
+        <button class="tab" data-view="backupView">保存</button>
+      </nav>
+
+      <section id="logsView" class="view is-active">
+        <div class="section-head">
+          <div>
+            <p class="subhead">Log list</p>
+            <h2>これまでのダイビング</h2>
+          </div>
+          <button id="newLogButton" class="primary">新規ログ</button>
+        </div>
+        <div id="stats" class="stats"></div>
+        <div class="search-panel" aria-label="ログ検索">
+          <label>
+            キーワード検索
+            <input id="logSearch" type="search" placeholder="地域、ポイント、バディ、生き物、メモ">
+          </label>
+          <label>
+            地域フィルター
+            <select id="areaFilter">
+              <option value="">すべての地域</option>
+            </select>
+          </label>
+          <button id="clearSearchButton" class="ghost" type="button">条件クリア</button>
+        </div>
+        <p id="filterStatus" class="hint"></p>
+        <div id="logList" class="log-list"></div>
+      </section>
+
+      <section id="entryView" class="view">
+        <div class="section-head">
+          <div>
+            <p class="subhead">Entry</p>
+            <h2 id="entryTitle">ログを入力</h2>
+          </div>
+          <button id="copyLastButton" class="ghost">前回をコピー</button>
+        </div>
+
+        <form id="logForm" class="form">
+          <input id="logId" type="hidden">
+
+          <div class="grid two">
+            <label>
+              日付
+              <input id="date" type="date" required>
+            </label>
+            <label>
+              ダイブ番号
+              <input id="diveNumber" type="text" inputmode="numeric" placeholder="自動">
+            </label>
+          </div>
+
+          <div class="grid two">
+            <label>
+              エリア
+              <input id="area" type="text" placeholder="例：伊豆海洋公園">
+            </label>
+            <label>
+              ポイント名
+              <input id="site" type="text" placeholder="例：1の根">
+            </label>
+          </div>
+
+          <div class="map-card">
+            <div class="map-actions">
+              <button type="button" id="locateButton" class="secondary">現在地を取得</button>
+              <button type="button" id="clearLocationButton" class="ghost">位置を外す</button>
+            </div>
+            <div id="pickerMap" class="map"></div>
+            <p id="locationText" class="hint">地図をタップ、またはピンを動かして場所を修正できます。</p>
+          </div>
+
+          <div class="grid three">
+            <label>
+              天気
+              <input id="weather" type="text" placeholder="晴れ">
+            </label>
+            <label>
+              気温
+              <input id="airTemp" type="text" inputmode="decimal" placeholder="28">
+            </label>
+            <label>
+              水温
+              <input id="waterTemp" type="text" inputmode="decimal" placeholder="24">
+            </label>
+          </div>
+
+          <div class="grid three">
+            <label>
+              透明度
+              <input id="visibility" type="text" placeholder="10m">
+            </label>
+            <label>
+              最大深度
+              <input id="maxDepth" type="text" inputmode="decimal" placeholder="18">
+            </label>
+            <label>
+              使用ガス
+              <input id="gas" type="text" placeholder="Air / Nitrox 32%">
+            </label>
+          </div>
+
+          <div class="grid two">
+            <label>
+              Time in
+              <input id="timeIn" type="time">
+            </label>
+            <label>
+              Time out
+              <input id="timeOut" type="time">
+            </label>
+          </div>
+
+          <div class="calculated-time">
+            <label>
+              このダイブの潜水時間
+              <input id="bottomTime" type="text" inputmode="numeric" placeholder="Time in / outから自動計算" readonly>
+            </label>
+            <strong id="durationPreview">--分</strong>
+          </div>
+
+          <div class="grid three">
+            <label>
+              タンク
+              <input id="tank" type="text" placeholder="10L スチール">
+            </label>
+            <label>
+              開始圧
+              <input id="startPressure" type="text" inputmode="numeric" placeholder="200">
+            </label>
+            <label>
+              終了圧
+              <input id="endPressure" type="text" inputmode="numeric" placeholder="70">
+            </label>
+          </div>
+
+          <div class="grid three">
+            <label>
+              流れ
+              <select id="current">
+                <option value="">選択</option>
+                <option>なし</option>
+                <option>弱い</option>
+                <option>中くらい</option>
+                <option>強い</option>
+              </select>
+            </label>
+            <label>
+              波高
+              <input id="waveHeight" type="text" inputmode="decimal" placeholder="例：0.5m">
+            </label>
+            <label>
+              エントリー
+              <select id="entryType">
+                <option value="">選択</option>
+                <option>ビーチ</option>
+                <option>ボート</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="grid three">
+            <label>
+              ウエイト
+              <input id="weight" type="text" placeholder="4kg">
+            </label>
+            <label>
+              スーツ
+              <input id="suit" type="text" placeholder="5mm wetsuit">
+            </label>
+          </div>
+
+          <div class="grid two">
+            <label>
+              バディ
+              <textarea id="buddy" rows="3" placeholder="一緒に潜った人の名前。複数いる時は改行やカンマで記録できます。"></textarea>
+            </label>
+            <label>
+              ガイド
+              <input id="guide" type="text" placeholder="ガイド、インストラクター">
+            </label>
+          </div>
+
+          <label>
+            見た生き物
+            <input id="marineLife" type="text" placeholder="例：クマノミ、アオウミウシ">
+          </label>
+
+          <label>
+            メモ
+            <textarea id="notes" rows="5" placeholder="海の様子、できたこと、次に試したいことなど"></textarea>
+          </label>
+
+          <label class="photo-input">
+            写真を追加
+            <input id="photos" type="file" accept="image/*" multiple>
+          </label>
+          <div id="photoPreview" class="photo-preview"></div>
+
+          <div class="sticky-actions">
+            <button type="button" id="cancelEditButton" class="ghost">キャンセル</button>
+            <button type="submit" class="primary">保存する</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="mapView" class="view">
+        <div class="section-head">
+          <div>
+            <p class="subhead">Dive map</p>
+            <h2>潜った場所</h2>
+          </div>
+        </div>
+        <div id="overviewMap" class="overview-map"></div>
+        <div id="mapLogList" class="map-log-list"></div>
+      </section>
+
+      <section id="backupView" class="view">
+        <div class="section-head">
+          <div>
+            <p class="subhead">Backup</p>
+            <h2>自分で保管する</h2>
+          </div>
+        </div>
+        <div class="backup-panel">
+          <p>データはこの端末のブラウザに保存されます。機種変更やPCで使う時は、バックアップファイルを書き出して、移動先で読み込んでください。</p>
+          <div class="backup-actions">
+            <button id="exportButton" class="primary">バックアップを書き出す</button>
+            <label class="import-button">
+              バックアップを読み込む
+              <input id="importFile" type="file" accept="application/json">
+            </label>
+          </div>
+          <p id="backupStatus" class="hint"></p>
+        </div>
+      </section>
+    </main>
+
+    <template id="logCardTemplate">
+      <article class="log-card">
+        <img class="log-card__photo" alt="">
+        <div class="log-card__body">
+          <div class="log-card__top">
+            <div>
+              <p class="log-card__date"></p>
+              <h3></h3>
+            </div>
+            <p class="log-card__number"></p>
+          </div>
+          <dl class="log-card__facts"></dl>
+          <p class="log-card__notes"></p>
+          <div class="log-card__actions">
+            <button class="secondary view-log">詳細</button>
+            <button class="secondary edit-log">編集</button>
+            <button class="ghost duplicate-log">コピー</button>
+            <button class="danger delete-log">削除</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <dialog id="detailDialog" class="detail-dialog">
+      <div class="detail-dialog__head">
+        <div>
+          <p class="subhead">Log detail</p>
+          <h2 id="detailTitle">ログ詳細</h2>
+        </div>
+        <button id="closeDetailButton" class="ghost">閉じる</button>
+      </div>
+      <div id="detailBody" class="detail-body"></div>
+    </dialog>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js?v=5"></script>
+  </body>
+</html>
