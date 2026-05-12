@@ -5,7 +5,10 @@ const ASSETS = [
   "./styles.css?v=5",
   "./app.js?v=5",
   "./manifest.webmanifest",
-  "./assets/ocean-hero.png"
+  "./assets/ocean-hero.png",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/apple-touch-icon.png"
 ];
 
 self.addEventListener("install", (event) => {
